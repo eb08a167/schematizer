@@ -4,16 +4,18 @@ Schematizer is a lightweight library for data marshalling/unmarshalling in Pytho
 
 It helps you:
 * **Validate** input and output data
-* **Marshal** data into a form you would like to interact with
-* **Unmarshal** data so that it can be rendered to JSON, YAML, MsgPack, etc.
+* **Marshal** primitive data into a form you would like to interact with
+* **Unmarshal** native data so that it can be rendered to JSON, YAML, MsgPack, etc.
 
 ## Examples
 
-Let's start with a simple example.
+Simple.
 
 ```python
->>> from schematizer import Length, BaseValidationError
->>> from schematizer.nodes import Date, Dict, List, Str
+>>> from schematizer.exceptions import BaseValidationError
+>>> from schematizer.nodes.compound import Dict, List
+>>> from schematizer.nodes.simple import Date, Str
+>>> from schematizer.validators import Length
 >>>
 >>> album_schema = Dict({
 ...    'title': Str(),
@@ -37,7 +39,7 @@ Let's start with a simple example.
 {'name': 'Burzum', 'albums': [{'title': 'Filosofem', 'released_at': datetime.date(1996, 1, 1)}]}
 ```
 
-Now feed invalid data.
+With invalid data.
 
 ```python
 >>> try:
@@ -58,7 +60,9 @@ Now feed invalid data.
 
 ## Installation
 
-`pip install schematizer`
+```
+pip install schematizer
+```
 
 ## Documentation
 
