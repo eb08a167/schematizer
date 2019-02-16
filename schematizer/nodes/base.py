@@ -1,7 +1,7 @@
-from schematizer.exceptions import SimpleValidationError
+from common.schematizer.exceptions import SimpleValidationError
 
 
-class BaseNode:
+class Base:
     def to_native(self, obj):
         raise NotImplementedError
 
@@ -9,7 +9,7 @@ class BaseNode:
         raise NotImplementedError
 
 
-class BaseCoercibleNode(BaseNode):
+class BaseCoercible(Base):
     def coerce_primitive(self, obj):
         raise NotImplementedError
 
@@ -20,9 +20,7 @@ class BaseCoercibleNode(BaseNode):
         try:
             return self.coerce_primitive(obj)
         except (TypeError, ValueError) as exc:
-            raise SimpleValidationError(
-                'INVALID', extra={'message': str(exc)},
-            ) from exc
+            raise SimpleValidationError('UNMARSHABLE', extra={'message': str(exc)}) from exc
 
     def to_primitive(self, obj):
         return self.coerce_native(obj)

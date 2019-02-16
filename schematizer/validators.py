@@ -1,4 +1,4 @@
-from schematizer.exceptions import SimpleValidationError, StopValidation
+from common.schematizer.exceptions import SimpleValidationError, StopValidation
 
 
 class BaseValidator:
@@ -9,7 +9,7 @@ class BaseValidator:
         pass
 
 
-class NullableValidator(BaseValidator):
+class Nullable(BaseValidator):
     def validate(self, obj):
         if obj is None:
             raise StopValidation()
@@ -21,7 +21,7 @@ class NullableValidator(BaseValidator):
         self.validate(obj)
 
 
-class LengthValidator(BaseValidator):
+class Length(BaseValidator):
     def __init__(self, min=None, max=None):
         self.min = min
         self.max = max
@@ -41,7 +41,7 @@ class LengthValidator(BaseValidator):
             })
 
 
-class RangeValidator(BaseValidator):
+class Range(BaseValidator):
     def __init__(self, min=None, max=None):
         self.min = min
         self.max = max
@@ -58,8 +58,3 @@ class RangeValidator(BaseValidator):
                 'min': self.min,
                 'max': self.max,
             })
-
-
-Nullable = NullableValidator
-Length = LengthValidator
-Range = RangeValidator

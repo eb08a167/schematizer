@@ -1,28 +1,21 @@
-from schematizer.exceptions import (
-    BaseValidationError, CompoundValidationError, NestedValidationError, SimpleValidationError,
-    StopValidation,
+from functools import lru_cache
+
+from common.schematizer.exceptions import (
+    BaseValidationError, CompoundValidationError, NestedValidationError, SimpleValidationError, StopValidation,
 )
-from schematizer.nodes.base import BaseCoercibleNode, BaseNode
+from common.schematizer.key import Key
+from common.schematizer.nodes.base import Base, BaseCoercible
+from dataclasses import make_dataclass
 
 
-def _force_key(str_or_key, **kwargs):
+def _force_key(str_or_key):
     if isinstance(str_or_key, Key):
         return str_or_key
     else:
-        return Key(str_or_key, **kwargs)
+        return Key(str_or_key)
 
 
-class Key:
-    def __init__(self, primitive, native=None, required=True):
-        self.primitive = primitive
-        self.native = native or primitive
-        self.required = required
-
-    def __hash__(self):
-        return hash(self.primitive)
-
-
-class ListNode(BaseCoercibleNode):
+class List(BaseCoercible):
     coerce_primitive = list
 
     def __init__(self, node):
@@ -47,21 +40,24 @@ class ListNode(BaseCoercibleNode):
         return [self.node.to_primitive(item) for item in obj]
 
 
-class BaseEntityNode(BaseCoercibleNode):
+class BaseEntity(BaseCoercible):
     coerce_primitive = dict
 
-    def __init__(self, nodes, **kwargs):
+    def __init__(self, nodes={}):
         super().__init__()
         self.nodes = {
-            _force_key(str_or_key, **kwargs): node
+            _force_key(str_or_key): node
             for str_or_key, node in nodes.items()
         }
 
-    def get_prop(self, obj, key):
+    def get_native_type(self):
         raise NotImplementedError
 
-    def extended(self, nodes, **kwargs):
-        return self.__class__({**self.nodes, **nodes}, **kwargs)
+    def get_native_accessor(self):
+        raise NotImplementedError
+
+    def extended(self, nodes):
+        return self.__class__({**self.nodes, **nodes})
 
     def to_native(self, obj):
         obj = super().to_native(obj)
@@ -69,16 +65,16 @@ class BaseEntityNode(BaseCoercibleNode):
         errors = []
         for key, node in self.nodes.items():
             try:
-                prop = obj[key.primitive]
+                value = obj[key.primitive]
             except KeyError:
-                if key.required:
+                if key.is_required:
                     error = NestedValidationError(
                         key.primitive, SimpleValidationError('MISSING'),
                     )
                     errors.append(error)
                 continue
             try:
-                result[key.native] = node.to_native(prop)
+                result[key.native] = node.to_native(value)
             except BaseValidationError as exc:
                 errors.append(
                     NestedValidationError(key.primitive, exc),
@@ -86,31 +82,43 @@ class BaseEntityNode(BaseCoercibleNode):
         if errors:
             raise CompoundValidationError(errors)
         else:
-            return result
+            native_type = self.get_native_type()
+            return native_type(**result)
 
     def to_primitive(self, obj):
         result = {}
+        native_accessor = self.get_native_accessor()
         for key, node in self.nodes.items():
-            prop = self.get_prop(obj, key.native)
-            result[key.primitive] = node.to_primitive(prop)
+            value = native_accessor(obj, key.native)
+            result[key.primitive] = node.to_primitive(value)
         return result
 
 
-class DictNode(BaseEntityNode):
-    def get_prop(self, obj, key):
-        return obj[key]
+class Dict(BaseEntity):
+    def get_native_type(self):
+        return dict
+
+    def get_native_accessor(self):
+        return dict.__getitem__
 
 
-class ObjectNode(BaseEntityNode):
-    def get_prop(self, obj, key):
-        return getattr(obj, key)
+class DataClass(BaseEntity):
+    @lru_cache(maxsize=None)
+    def get_native_type(self):
+        return make_dataclass('NativeType', [key.native for key in self.nodes], frozen=True)
+
+    def get_native_accessor(self):
+        return getattr
 
 
-class CalledNode(BaseNode):
+class Called(Base):
     def __init__(self, node, *args, **kwargs):
         self.node = node
         self.args = args
         self.kwargs = kwargs
+
+    def to_native(self, obj):
+        return self.node.to_native(obj)
 
     def to_primitive(self, obj):
         return self.node.to_primitive(
@@ -118,7 +126,7 @@ class CalledNode(BaseNode):
         )
 
 
-class WrappedNode(BaseNode):
+class Wrapped(Base):
     def __init__(self, node, validators):
         super().__init__()
         self.node = node
@@ -145,10 +153,3 @@ class WrappedNode(BaseNode):
         for validator in self.validators:
             validator.validate_primitive(obj)
         return obj
-
-
-List = ListNode
-Dict = DictNode
-Object = ObjectNode
-Called = CalledNode
-Wrapped = WrappedNode

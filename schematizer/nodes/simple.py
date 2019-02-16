@@ -1,10 +1,11 @@
-from datetime import datetime
+import uuid
+from datetime import datetime, timezone
 
-from schematizer.exceptions import SimpleValidationError
-from schematizer.nodes.base import BaseCoercibleNode, BaseNode
+from common.schematizer.exceptions import SimpleValidationError
+from common.schematizer.nodes.base import Base, BaseCoercible
 
 
-class DummyNode(BaseNode):
+class Dummy(Base):
     def to_native(self, obj):
         return obj
 
@@ -12,7 +13,7 @@ class DummyNode(BaseNode):
         return obj
 
 
-class BoolNode(BaseCoercibleNode):
+class Bool(BaseCoercible):
     TRUE_VALUES = (True, 1, '1', 'true', 't', 'yes', 'y', 'on')
     FALSE_VALUES = (False, 0, '0', 'false', 'f', 'no', 'n', 'off')
 
@@ -24,54 +25,46 @@ class BoolNode(BaseCoercibleNode):
         if obj in self.FALSE_VALUES:
             return False
         else:
-            extra = {'message': f'invalid boolean: {obj!r}'}
-            raise SimpleValidationError('INVALID', extra=extra)
+            raise SimpleValidationError('UNMARSHABLE', extra={
+                'message': f'not a boolean: {obj!r}',
+            })
 
 
-class IntNode(BaseCoercibleNode):
+class Int(BaseCoercible):
     coerce_primitive = int
     coerce_native = int
 
 
-class FloatNode(BaseCoercibleNode):
+class Float(BaseCoercible):
     coerce_primitive = float
     coerce_native = float
 
 
-class StrNode(BaseCoercibleNode):
+class Str(BaseCoercible):
     coerce_primitive = str
     coerce_native = str
 
 
-class DateTimeNode(BaseCoercibleNode):
-    FORMAT = '%Y-%m-%d %H:%M:%S'
+class UUID(BaseCoercible):
+    coerce_primitive = uuid.UUID
+    coerce_native = str
+
+
+class Enum(BaseCoercible):
+    def __init__(self, enum_type):
+        super().__init__()
+        self.enum_type = enum_type
 
     def coerce_primitive(self, obj):
-        return datetime.strptime(obj, self.FORMAT)
+        return self.enum_type(obj)
 
     def coerce_native(self, obj):
-        return obj.strftime(self.FORMAT)
+        return obj.value
 
 
-class DateNode(DateTimeNode):
-    FORMAT = '%Y-%m-%d'
-
+class DateTime(BaseCoercible):
     def coerce_primitive(self, obj):
-        return super().coerce_primitive(obj).date()
+        return datetime.utcfromtimestamp(float(obj))
 
-
-class TimeNode(DateTimeNode):
-    FORMAT = '%H:%M:%S'
-
-    def coerce_primitive(self, obj):
-        return super().coerce_primitive(obj).time()
-
-
-Dummy = DummyNode
-Bool = BoolNode
-Int = IntNode
-Float = FloatNode
-Str = StrNode
-DateTime = DateTimeNode
-Date = DateNode
-Time = TimeNode
+    def coerce_native(self, obj):
+        return obj.replace(tzinfo=timezone.utc).timestamp()
