@@ -3,7 +3,7 @@ from schematizer.exceptions import (
     BaseValidationError, CompoundValidationError, NestedValidationError, SimpleValidationError, StopValidation,
 )
 from schematizer.key import Key
-from schematizer.nodes.base import Base, BaseCoercible
+from schematizer.schemas.base import BaseCoercibleSchema, BaseSchema
 
 
 def _force_key(str_or_key):
@@ -13,12 +13,12 @@ def _force_key(str_or_key):
         return Key(str_or_key)
 
 
-class List(BaseCoercible):
+class List(BaseCoercibleSchema):
     coerce_primitive = list
 
-    def __init__(self, node):
+    def __init__(self, schema):
         super().__init__()
-        self.node = node
+        self.schema = schema
 
     def to_native(self, obj):
         obj = super().to_native(obj)
@@ -26,7 +26,7 @@ class List(BaseCoercible):
         errors = []
         for i, item in enumerate(obj):
             try:
-                result.append(self.node.to_native(item))
+                result.append(self.schema.to_native(item))
             except BaseValidationError as exc:
                 errors.append(NestedValidationError(i, exc))
         if errors:
@@ -35,23 +35,23 @@ class List(BaseCoercible):
             return result
 
     def to_primitive(self, obj):
-        return [self.node.to_primitive(item) for item in obj]
+        return [self.schema.to_primitive(item) for item in obj]
 
 
-class BaseEntity(BaseCoercible):
+class BaseEntity(BaseCoercibleSchema):
     coerce_primitive = dict
 
     def __init__(self, *args, **kwargs):
         super().__init__()
         try:
-            nodes, = args
+            schemas, = args
             assert not kwargs, 'No keyword arguments allowed'
         except ValueError:
-            nodes = kwargs
+            schemas = kwargs
             assert not args, 'No positional arguments allowed'
-        self.nodes = {
-            _force_key(str_or_key): node
-            for str_or_key, node in nodes.items()
+        self.schemas = {
+            _force_key(str_or_key): schema
+            for str_or_key, schema in schemas.items()
         }
 
     def get_native_type(self):
@@ -60,14 +60,14 @@ class BaseEntity(BaseCoercible):
     def get_native_accessor(self):
         raise NotImplementedError
 
-    def extended(self, nodes):
-        return self.__class__({**self.nodes, **nodes})
+    def extended(self, schemas):
+        return self.__class__({**self.schemas, **schemas})
 
     def to_native(self, obj):
         obj = super().to_native(obj)
         result = {}
         errors = []
-        for key, node in self.nodes.items():
+        for key, schema in self.schemas.items():
             try:
                 value = obj[key.primitive]
             except KeyError:
@@ -78,7 +78,7 @@ class BaseEntity(BaseCoercible):
                     errors.append(error)
                 continue
             try:
-                result[key.native] = node.to_native(value)
+                result[key.native] = schema.to_native(value)
             except BaseValidationError as exc:
                 errors.append(
                     NestedValidationError(key.primitive, exc),
@@ -92,9 +92,9 @@ class BaseEntity(BaseCoercible):
     def to_primitive(self, obj):
         result = {}
         native_accessor = self.get_native_accessor()
-        for key, node in self.nodes.items():
+        for key, schema in self.schemas.items():
             value = native_accessor(obj, key.native)
-            result[key.primitive] = node.to_primitive(value)
+            result[key.primitive] = schema.to_primitive(value)
         return result
 
 
@@ -109,7 +109,7 @@ class Dict(BaseEntity):
 class DataClass(BaseEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.native_type = make_dataclass('DataClass', [key.native for key in self.nodes], frozen=True)
+        self.native_type = make_dataclass('DataClass', [key.native for key in self.schemas], frozen=True)
 
     def get_native_type(self):
         return self.native_type
@@ -118,25 +118,25 @@ class DataClass(BaseEntity):
         return getattr
 
 
-class Called(Base):
-    def __init__(self, node, *args, **kwargs):
-        self.node = node
+class Called(BaseSchema):
+    def __init__(self, schema, *args, **kwargs):
+        self.schema = schema
         self.args = args
         self.kwargs = kwargs
 
     def to_native(self, obj):
-        return self.node.to_native(obj)
+        return self.schema.to_native(obj)
 
     def to_primitive(self, obj):
-        return self.node.to_primitive(
+        return self.schema.to_primitive(
             obj(*self.args, **self.kwargs),
         )
 
 
-class Wrapped(Base):
-    def __init__(self, node, validators):
+class Wrapped(BaseSchema):
+    def __init__(self, schema, validators):
         super().__init__()
-        self.node = node
+        self.schema = schema
         self.validators = validators
 
     def to_native(self, obj):
@@ -145,7 +145,7 @@ class Wrapped(Base):
                 validator.validate_primitive(obj)
         except StopValidation:
             return obj
-        obj = self.node.to_native(obj)
+        obj = self.schema.to_native(obj)
         for validator in self.validators:
             validator.validate_native(obj)
         return obj
@@ -156,7 +156,7 @@ class Wrapped(Base):
                 validator.validate_native(obj)
         except StopValidation:
             return obj
-        obj = self.node.to_primitive(obj)
+        obj = self.schema.to_primitive(obj)
         for validator in self.validators:
             validator.validate_primitive(obj)
         return obj

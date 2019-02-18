@@ -5,7 +5,7 @@ with open('README.rst') as fp:
 
 setup(
     name='schematizer',
-    version='0.8.1',
+    version='0.8.2',
     description='A lightweight library for data marshalling/unmarshalling in Python',
     long_description=long_description,
     url='https://github.com/eb08a167/schematizer',

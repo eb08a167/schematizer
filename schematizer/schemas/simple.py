@@ -2,10 +2,10 @@ import uuid
 from datetime import datetime, timezone
 
 from schematizer.exceptions import SimpleValidationError
-from schematizer.nodes.base import Base, BaseCoercible
+from schematizer.schemas.base import BaseCoercibleSchema, BaseSchema
 
 
-class Dummy(Base):
+class Dummy(BaseSchema):
     def to_native(self, obj):
         return obj
 
@@ -13,7 +13,7 @@ class Dummy(Base):
         return obj
 
 
-class Bool(BaseCoercible):
+class Bool(BaseCoercibleSchema):
     TRUE_VALUES = (True, 1, '1', 'true', 't', 'yes', 'y', 'on')
     FALSE_VALUES = (False, 0, '0', 'false', 'f', 'no', 'n', 'off')
 
@@ -30,27 +30,27 @@ class Bool(BaseCoercible):
             })
 
 
-class Int(BaseCoercible):
+class Int(BaseCoercibleSchema):
     coerce_primitive = int
     coerce_native = int
 
 
-class Float(BaseCoercible):
+class Float(BaseCoercibleSchema):
     coerce_primitive = float
     coerce_native = float
 
 
-class Str(BaseCoercible):
+class Str(BaseCoercibleSchema):
     coerce_primitive = str
     coerce_native = str
 
 
-class UUID(BaseCoercible):
+class UUID(BaseCoercibleSchema):
     coerce_primitive = uuid.UUID
     coerce_native = str
 
 
-class Enum(BaseCoercible):
+class Enum(BaseCoercibleSchema):
     def __init__(self, enum_type):
         super().__init__()
         self.enum_type = enum_type
@@ -62,7 +62,7 @@ class Enum(BaseCoercible):
         return obj.value
 
 
-class DateTime(BaseCoercible):
+class DateTime(BaseCoercibleSchema):
     def coerce_primitive(self, obj):
         return datetime.utcfromtimestamp(float(obj))
 

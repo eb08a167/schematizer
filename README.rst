@@ -17,8 +17,8 @@ Simple.
 .. code:: python
 
     >>> from schematizer.exceptions import BaseValidationError
-    >>> from schematizer.nodes.compound import Dict, List
-    >>> from schematizer.nodes.simple import Date, Str
+    >>> from schematizer.schemas.compound import Dict, List
+    >>> from schematizer.schemas.simple import Date, Str
     >>> from schematizer.validators import Length
     >>>
     >>> album_schema = Dict({

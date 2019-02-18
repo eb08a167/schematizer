@@ -1,7 +1,7 @@
 from schematizer.exceptions import SimpleValidationError
 
 
-class Base:
+class BaseSchema:
     def to_native(self, obj):
         raise NotImplementedError
 
@@ -9,7 +9,7 @@ class Base:
         raise NotImplementedError
 
 
-class BaseCoercible(Base):
+class BaseCoercibleSchema(BaseSchema):
     def coerce_primitive(self, obj):
         raise NotImplementedError
 
