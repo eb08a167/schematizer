@@ -2,8 +2,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
-from common.schematizer.exceptions import CompoundValidationError, SimpleValidationError
-from common.schematizer.validators import BaseValidator
+from schematizer.exceptions import CompoundValidationError, SimpleValidationError
+from schematizer.validators import BaseValidator
 
 
 class Email(BaseValidator):

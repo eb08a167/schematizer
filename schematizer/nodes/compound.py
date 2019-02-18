@@ -1,11 +1,9 @@
-from functools import lru_cache
-
-from common.schematizer.exceptions import (
+from dataclasses import make_dataclass
+from schematizer.exceptions import (
     BaseValidationError, CompoundValidationError, NestedValidationError, SimpleValidationError, StopValidation,
 )
-from common.schematizer.key import Key
-from common.schematizer.nodes.base import Base, BaseCoercible
-from dataclasses import make_dataclass
+from schematizer.key import Key
+from schematizer.nodes.base import Base, BaseCoercible
 
 
 def _force_key(str_or_key):
@@ -43,8 +41,14 @@ class List(BaseCoercible):
 class BaseEntity(BaseCoercible):
     coerce_primitive = dict
 
-    def __init__(self, nodes={}):
+    def __init__(self, *args, **kwargs):
         super().__init__()
+        try:
+            nodes, = args
+            assert not kwargs, 'No keyword arguments allowed'
+        except ValueError:
+            nodes = kwargs
+            assert not args, 'No positional arguments allowed'
         self.nodes = {
             _force_key(str_or_key): node
             for str_or_key, node in nodes.items()
@@ -103,9 +107,12 @@ class Dict(BaseEntity):
 
 
 class DataClass(BaseEntity):
-    @lru_cache(maxsize=None)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.native_type = make_dataclass('DataClass', [key.native for key in self.nodes], frozen=True)
+
     def get_native_type(self):
-        return make_dataclass('NativeType', [key.native for key in self.nodes], frozen=True)
+        return self.native_type
 
     def get_native_accessor(self):
         return getattr

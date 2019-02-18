@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 
-from common.schematizer.exceptions import SimpleValidationError
-from common.schematizer.nodes.base import Base, BaseCoercible
+from schematizer.exceptions import SimpleValidationError
+from schematizer.nodes.base import Base, BaseCoercible
 
 
 class Dummy(Base):

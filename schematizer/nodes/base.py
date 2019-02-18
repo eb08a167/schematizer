@@ -1,4 +1,4 @@
-from common.schematizer.exceptions import SimpleValidationError
+from schematizer.exceptions import SimpleValidationError
 
 
 class Base:

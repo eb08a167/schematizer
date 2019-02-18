@@ -1,4 +1,4 @@
-from common.schematizer.exceptions import SimpleValidationError, StopValidation
+from schematizer.exceptions import SimpleValidationError, StopValidation
 
 
 class BaseValidator:
