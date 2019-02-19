@@ -59,7 +59,7 @@ class Enum(BaseCoercibleSchema):
         return self.enum_type(obj)
 
     def coerce_native(self, obj):
-        return obj.value
+        return self.enum_type(obj).value
 
 
 class DateTime(BaseCoercibleSchema):
