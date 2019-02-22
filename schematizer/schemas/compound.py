@@ -60,8 +60,9 @@ class BaseEntity(BaseCoercibleSchema):
     def get_native_accessor(self):
         raise NotImplementedError
 
-    def extended(self, schemas):
-        return self.__class__({**self.schemas, **schemas})
+    def extended(self, *args, **kwargs):
+        extension_schema = self.__class__(*args, **kwargs)
+        return self.__class__({**self.schemas, **extension_schema.schemas})
 
     def to_native(self, obj):
         obj = super().to_native(obj)
