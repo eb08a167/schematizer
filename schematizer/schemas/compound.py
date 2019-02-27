@@ -54,6 +54,10 @@ class BaseEntity(BaseCoercibleSchema):
             for str_or_key, schema in schemas.items()
         }
 
+    def __call__(self, *args, **kwargs):
+        native_type = self.get_native_type()
+        return native_type(*args, **kwargs)
+
     def get_native_type(self):
         raise NotImplementedError
 
@@ -87,8 +91,7 @@ class BaseEntity(BaseCoercibleSchema):
         if errors:
             raise CompoundValidationError(errors)
         else:
-            native_type = self.get_native_type()
-            return native_type(**result)
+            return self(**result)
 
     def to_primitive(self, obj):
         result = {}
