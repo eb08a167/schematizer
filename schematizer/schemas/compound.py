@@ -64,6 +64,9 @@ class BaseEntity(BaseCoercibleSchema):
     def get_native_accessor(self):
         raise NotImplementedError
 
+    def get_native_accessor_error(self):
+        raise NotImplementedError
+
     def extended(self, *args, **kwargs):
         extension_schema = self.__class__(*args, **kwargs)
         return self.__class__({**self.schemas, **extension_schema.schemas})
@@ -96,8 +99,15 @@ class BaseEntity(BaseCoercibleSchema):
     def to_primitive(self, obj):
         result = {}
         native_accessor = self.get_native_accessor()
+        native_accessor_error = self.get_native_accessor_error()
         for key, schema in self.schemas.items():
-            value = native_accessor(obj, key.native)
+            try:
+                value = native_accessor(obj, key.native)
+            except native_accessor_error:
+                if key.is_required:
+                    raise
+                else:
+                    continue
             result[key.primitive] = schema.to_primitive(value)
         return result
 
@@ -108,6 +118,9 @@ class Dict(BaseEntity):
 
     def get_native_accessor(self):
         return dict.__getitem__
+
+    def get_native_accessor_error(self):
+        return KeyError
 
 
 class DataClass(BaseEntity):
@@ -120,6 +133,9 @@ class DataClass(BaseEntity):
 
     def get_native_accessor(self):
         return getattr
+
+    def get_native_accessor_error(self):
+        return AttributeError
 
 
 class Called(BaseSchema):

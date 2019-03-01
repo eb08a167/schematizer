@@ -12,7 +12,7 @@ class BaseValidator:
 class Nullable(BaseValidator):
     def validate(self, obj):
         if obj is None:
-            raise StopValidation()
+            raise StopValidation
 
     def validate_primitive(self, obj):
         self.validate(obj)
