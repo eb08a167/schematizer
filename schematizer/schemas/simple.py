@@ -1,3 +1,4 @@
+import decimal
 import uuid
 from datetime import datetime, timezone
 
@@ -43,6 +44,13 @@ class Float(BaseCoercibleSchema):
 class Str(BaseCoercibleSchema):
     coerce_primitive = str
     coerce_native = str
+
+
+class Decimal(BaseCoercibleSchema):
+    coerce_primitive = decimal.Decimal
+
+    def coerce_native(self, obj):
+        return f'{obj.normalize():f}'
 
 
 class UUID(BaseCoercibleSchema):

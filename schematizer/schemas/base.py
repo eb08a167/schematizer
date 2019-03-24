@@ -19,7 +19,7 @@ class BaseCoercibleSchema(BaseSchema):
     def to_native(self, obj):
         try:
             return self.coerce_primitive(obj)
-        except (TypeError, ValueError) as exc:
+        except (TypeError, ValueError, ArithmeticError) as exc:
             raise SimpleValidationError('UNMARSHABLE', extra={'message': str(exc)}) from exc
 
     def to_primitive(self, obj):
