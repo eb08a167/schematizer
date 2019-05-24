@@ -18,17 +18,15 @@ class Bool(BaseCoercibleSchema):
     TRUE_VALUES = (True, 1, '1', 'true', 't', 'yes', 'y', 'on')
     FALSE_VALUES = (False, 0, '0', 'false', 'f', 'no', 'n', 'off')
 
-    coerce_native = bool
-
-    def to_native(self, obj):
+    def coerce_primitive(self, obj):
         if obj in self.TRUE_VALUES:
             return True
         if obj in self.FALSE_VALUES:
             return False
         else:
-            raise SimpleValidationError('UNMARSHABLE', extra={
-                'message': f'not a boolean: {obj!r}',
-            })
+            raise ValueError(f'not a boolean: {obj!r}')
+
+    coerce_native = bool
 
 
 class Int(BaseCoercibleSchema):

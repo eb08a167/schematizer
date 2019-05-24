@@ -48,9 +48,9 @@ class Range(BaseValidator):
 
     def validate_native(self, obj):
         if self.min is not None and obj < self.min:
-            code = 'TOO_SMALL'
+            code = 'TOO_LOW'
         elif self.max is not None and obj > self.max:
-            code = 'TOO_BIG'
+            code = 'TOO_HIGH'
         else:
             code = None
         if code:
