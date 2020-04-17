@@ -5,9 +5,10 @@ with open('README.rst') as fp:
 
 setup(
     name='schematizer',
-    version='0.9.0',
+    version='0.9.1',
     description='A lightweight library for data marshalling/unmarshalling in Python',
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     url='https://github.com/eb08a167/schematizer',
     author='Andrew Kiyko',
     author_email='eb08a167@gmail.com',

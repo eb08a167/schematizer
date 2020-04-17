@@ -40,8 +40,16 @@ class Float(BaseCoercibleSchema):
 
 
 class Str(BaseCoercibleSchema):
-    coerce_primitive = str
-    coerce_native = str
+    def __init__(self, strip=False):
+        super().__init__()
+        self.strip = strip
+
+    def coerce(self, obj):
+        str_obj = str(obj)
+        return str_obj.strip() if self.strip else str_obj
+
+    coerce_primitive = coerce
+    coerce_native = coerce
 
 
 class Decimal(BaseCoercibleSchema):
