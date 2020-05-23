@@ -2,7 +2,6 @@ import decimal
 import uuid
 from datetime import datetime, timezone
 
-from schematizer.exceptions import SimpleValidationError
 from schematizer.schemas.base import BaseCoercibleSchema, BaseSchema
 
 
@@ -64,6 +63,14 @@ class UUID(BaseCoercibleSchema):
     coerce_native = str
 
 
+class DateTime(BaseCoercibleSchema):
+    def coerce_primitive(self, obj):
+        return datetime.utcfromtimestamp(float(obj))
+
+    def coerce_native(self, obj):
+        return obj.replace(tzinfo=timezone.utc).timestamp()
+
+
 class Enum(BaseCoercibleSchema):
     def __init__(self, enum_type):
         super().__init__()
@@ -74,11 +81,3 @@ class Enum(BaseCoercibleSchema):
 
     def coerce_native(self, obj):
         return self.enum_type(obj).value
-
-
-class DateTime(BaseCoercibleSchema):
-    def coerce_primitive(self, obj):
-        return datetime.utcfromtimestamp(float(obj))
-
-    def coerce_native(self, obj):
-        return obj.replace(tzinfo=timezone.utc).timestamp()

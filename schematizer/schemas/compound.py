@@ -1,6 +1,8 @@
+import json
 from dataclasses import make_dataclass
+
 from schematizer.exceptions import (
-    BaseValidationError, CompoundValidationError, NestedValidationError, SimpleValidationError, StopValidation,
+    BaseValidationError, CompoundValidationError, NestedValidationError, SimpleValidationError, StopValidation
 )
 from schematizer.key import Key
 from schematizer.schemas.base import BaseCoercibleSchema, BaseSchema
@@ -136,6 +138,20 @@ class DataClass(BaseEntity):
 
     def get_native_accessor_error(self):
         return AttributeError
+
+
+class JSON(BaseCoercibleSchema):
+    def __init__(self, schema):
+        super().__init__()
+        self.schema = schema
+
+    def coerce_primitive(self, obj):
+        return self.schema.to_native(json.loads(obj))
+
+    def coerce_native(self, obj):
+        return self.schema.to_primitive(
+            json.dumps(obj, ensure_ascii=False, allow_nan=False),
+        )
 
 
 class Called(BaseSchema):
